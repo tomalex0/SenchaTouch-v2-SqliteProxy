@@ -1,0 +1,6 @@
+Sqlite proxy to handle Db operations. This meant to work with Sencha Touch v2
+
+
+Issue
+
+mapping property is not working with fields
