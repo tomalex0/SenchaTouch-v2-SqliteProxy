@@ -261,9 +261,9 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
 
             onSuccess = function(tx, rs) {
                 var returnrecord = record,
-                json = '{' + primarykey + ' : rs.insertId}'; // notice no quotes
-                returnrecord.set(eval("(" + json + ")"));
-                returnrecord.internalId = rs.insertId;
+		insertId = rs.insertId;
+		returnrecord.data[primarykey] = insertId;
+                returnrecord.internalId = insertId;
             },
 
             onError = function(tx, err) {
@@ -291,7 +291,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
      */
     updateRecord: function(record, tablename, primarykey) {
         var me = this,
-            id = record.internalId,
+            id = record.get(primarykey),
             key = primarykey,
             modifiedData = record.modified,
             newData = record.data,
