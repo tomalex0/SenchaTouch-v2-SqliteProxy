@@ -85,6 +85,9 @@ Ext.setup({
 			width : calculateDesiredWidth(),
 			items : [{
 				xtype: 'fieldset',
+				defaults:{
+					labelWidth : '45%'
+				},
 				items: [{
 					xtype: 'textfield',
 					label: 'First Name',
@@ -201,16 +204,16 @@ Ext.setup({
 		
 		//create main panel
 		Ext.create('Ext.Panel', {
-            fullscreen: true,
+			fullscreen: true,
 			layout: 'fit',
 			items : [{
 				xtype : 'navigationbar',
 				docked: 'top',
-                title: 'Edit User',
+                title: 'SQlite DB',
                 items: [{
 					text: 'Clear DB',
 					ui: 'decline',
-					align : 'right',
+					align : 'left',
 					handler: function() {
 						var p = contactStore.getProxy();
 						p.truncate('contact_table');
@@ -233,7 +236,9 @@ Ext.setup({
 					editPnl.loadModel(contactmodel);
 					editPnl.show();
 				},
-				itemTpl: '<div style="float:left;">{firstName} {lastName} - Last modified on {modifyDateParsed}</div><div class="x-button x-button-decline delete" style="float:right;text-align:right;margin-right:2em;margin-top:-5px;">Delete</div>',
+				itemTpl: ['<div >{firstName} {lastName} </div>',
+						'<div>{modifyDateParsed}</div>',
+						'<div class="delete"></div>'],
 				listeners: {
 					itemtap: function(view, index, item, e) {
 						

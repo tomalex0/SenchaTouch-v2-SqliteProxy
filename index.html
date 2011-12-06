@@ -3,7 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; minimum-scale=1.0; user-scalable=0;" />
-   <link rel="stylesheet" href="../../resources/css/sencha-touch.css" type="text/css">
+   <link rel="stylesheet" href="../../resources/css/v2/sencha-touch.css" type="text/css">
         
     <title>Sqlite Proxy</title>
    	
@@ -11,7 +11,21 @@
     <script type="text/javascript" src="SqliteConnection.js"></script>
     <script type="text/javascript" src="SqliteProxy.js"></script>
     <script type="text/javascript" src="index.js"></script>
-    
+    <style type="text/css">
+        .delete {
+            overflow: visible;
+            -webkit-mask: 0 0 url('data:image/png;base64,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') no-repeat;
+            -webkit-mask-size: 1.7em;
+            background-color: #C70505;
+            background-image: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #FB6A6A), color-stop(2%, #EA0606), color-stop(100%, #A40404));
+            background-image: linear-gradient(#FB6A6A,#EA0606 2%,#A40404);
+            width: 1.7em;
+            height: 1.7em;
+	    position: absolute;
+	    bottom: 0.5em;
+	    right: 3em;
+        }
+    </style>
 </head>
 <body></body>
 </html>
