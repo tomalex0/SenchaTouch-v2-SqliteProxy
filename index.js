@@ -203,7 +203,7 @@ Ext.setup({
 		});
 		
 		//create main panel
-		Ext.create('Ext.Panel', {
+		var mainPanel = Ext.create('Ext.Panel', {
 			fullscreen: true,
 			layout: 'fit',
 			items : [{
@@ -226,6 +226,34 @@ Ext.setup({
 					handler: function() {
 						addPnl.show();
 					}
+				}]
+			},{
+				xtype : 'toolbar',
+				docked : 'top',
+				items : [{
+					xtype : 'spacer'
+				},{
+					xtype      : 'textfield',
+					align : 'center',
+					itemId :'searchfield',
+					placeHolder: 'Search Firstname',
+					listeners :{
+						keyup: function(field) {
+							var value = field.getValue();
+							console.log(value);
+							
+							contactStore.load({params :{ name: value},query : 'select * from contacts_tables WHERE firstName = ?'});
+						}
+					}
+				},{
+					text : 'Reset',
+					ui  : 'action',
+					handler : function(){
+						mainPanel.query("#searchfield")[0].setValue('');
+						contactStore.load();
+					}
+				},{
+					xtype : 'spacer'
 				}]
 			},{
                 xtype: 'list',

@@ -65,9 +65,14 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
     },
     //inherit docs
     read: function(operation, callback, scope) {
-        var me = this;
-       
-        var sql = me.dbConfig.dbQuery || 'SELECT * FROM '+me.dbConfig.tablename+'';
+        var me = this,
+        param_arr = [];
+	
+	Ext.iterate(operation.params,function(a,i){
+	    param_arr.push(i);
+	});
+	
+        var sql = operation.query || me.dbConfig.dbQuery || 'SELECT * FROM '+me.dbConfig.tablename+'';
         
         var params, onSucess, onError;
         
@@ -80,7 +85,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
         };
 
         
-        me.queryDB(me.dbConfig.dbConn, sql, onSucess, onError);
+        me.queryDB(me.dbConfig.dbConn, sql, onSucess, onError,param_arr);
     },
     //inherit docs
     destroy: function(operation, callback, scope) {
