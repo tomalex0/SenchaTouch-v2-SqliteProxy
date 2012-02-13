@@ -2,6 +2,12 @@ var modelobj,contactStore;
 Ext.ns('DbConnection');
 
 
+var calculateDesiredWidth = function() {
+	var viewWidth = Ext.Viewport.getWindowWidth();
+	desiredWidth = Math.min(viewWidth, 400) - 10;
+	return desiredWidth;
+};
+
 Ext.setup({
 	tabletStartupScreen: 'tablet_startup.png',
 	phoneStartupScreen: 'phone_startup.png',
@@ -16,42 +22,40 @@ Ext.setup({
 
 		Ext.DbConnection = new Ext.Sqlite.Connection(dbconnval);
 		
-		var calculateDesiredWidth = function() {
-			var viewWidth = Ext.Element.getViewportWidth(),
-			desiredWidth = Math.min(viewWidth, 400) - 10;
-			return desiredWidth;
-		};
+		
 
 
 		Ext.define("Contacts", {
 			extend: "Ext.data.Model",
-			fields: [{
-				name: 'firstName',
-				type: 'string'
-			}, {
-				name: 'lastName',
-				type: 'string',
-				mapping : 'firstName'
-			}, {
-				name: 'ID',
-				type: 'int',
-				fieldOption: 'PRIMARY KEY ASC'
-			}, {
-				name: 'modifyDate',
-				type: 'string'
-
-			}, {
-				name: 'modifyDateParsed',
-				type: 'string',
-				mapping: 'modifyDate', // not working
-				isTableField: false,//newly implemented to distinguish field
-				convert: function(value, rec) {
-					var dt	=  Ext.Date.parseDate(rec.get('modifyDate'), "Y-m-d H:i:s")
-					newval	=  Ext.Date.format(dt,'M j, Y, g:i a')
-					return newval;
-				}
-			}],
-			proxy: {
+			config : {
+				fields: [{
+					name: 'firstName',
+					type: 'string'
+				}, {
+					name: 'lastName',
+					type: 'string',
+					mapping : 'firstName'
+				}, {
+					name: 'ids',
+					type: 'int',
+					fieldOption: 'PRIMARY KEY ASC'
+				}, {
+					name: 'modifyDate',
+					type: 'string'
+	
+				}, {
+					name: 'modifyDateParsed',
+					type: 'string',
+					mapping: 'modifyDate', // not working
+					isTableField: false,//newly implemented to distinguish field
+					convert: function(value, rec) {
+						
+						var dt	=  Ext.Date.parseDate(rec.get('modifyDate'), "Y-m-d H:i:s")
+						newval	=  Ext.Date.format(dt,'M j, Y, g:i a')
+						return newval;
+					}
+				}],
+				proxy: {
 				type: 'sqlitestorage',
 				dbConfig: {
 					tablename: 'contacts_tables',
@@ -62,6 +66,7 @@ Ext.setup({
 					type: 'array',
 					idProperty: 'ID'
 				}
+			}	
 			},
 			writer: {
 				type: 'array'
@@ -71,19 +76,22 @@ Ext.setup({
 		
 			
 		contactStore =  Ext.create('Ext.data.Store',{
-            model  : 'Contacts',
+			model  : 'Contacts',
 			autoLoad: true
-        });
+		});
 		
 		
 		//create add panel
 		var addPnl = Ext.create('Ext.form.Panel', {
+			hidden: true,
 			centered: true,
 			modal  : true,
 			height : 300,
 			hideOnMaskTap : false,
 			width : calculateDesiredWidth(),
 			items : [{
+					xtype : 'formpanel'
+				},{
 				xtype: 'fieldset',
 				defaults:{
 					labelWidth : '45%'
@@ -123,6 +131,7 @@ Ext.setup({
 							var dt = new Date();
 							var dateval = Ext.Date.format(dt,"Y-m-d H:i:s");
 							formval.modifyDate = dateval;
+							console.log(formval);
 							var rec = Ext.ModelMgr.create(formval, 'Contacts').save();
 							contactStore.load();
 							mainform.reset();
@@ -153,7 +162,7 @@ Ext.setup({
 					name: 'firstName'
 				}, {
 					xtype: 'hiddenfield',
-					name: 'ID'
+					name: 'ids'
 				}, {
 					xtype: 'textfield',
 					label: 'Last Name',
@@ -180,7 +189,7 @@ Ext.setup({
 				},{
 					xtype : 'spacer'
 				},{
-					text: 'Add',
+					text: 'Update',
 					ui: 'action',
 					align : 'right',
 					handler: function() {
@@ -190,9 +199,12 @@ Ext.setup({
 							var dt = new Date();
 							var dateval = Ext.Date.format(dt,"Y-m-d H:i:s");
 							formval.modifyDate = dateval;
-							var rec = Ext.ModelMgr.create(formval, 'Contacts', formval.ID).save();
-							contactStore.load();
-							mainform.reset();
+							var rec = Ext.ModelMgr.create(formval, 'Contacts', formval.ids);
+							console.log(formval);
+							//return false;
+							rec.save();
+							//contactStore.load();
+							//mainform.reset();
 							editPnl.hide();
 						} else {
 							alert("Enter Values");
@@ -207,7 +219,7 @@ Ext.setup({
 			fullscreen: true,
 			layout: 'fit',
 			items : [{
-				xtype : 'navigationbar',
+				xtype : 'titlebar',
 				docked: 'top',
                 title: 'SQlite DB',
                 items: [{
@@ -224,6 +236,7 @@ Ext.setup({
 					ui: 'action',
 					align : 'right',
 					handler: function() {
+						Ext.Viewport.add(addPnl)
 						addPnl.show();
 					}
 				}]
@@ -261,15 +274,16 @@ Ext.setup({
 				onItemDisclosure: function(rec) {
 					console.log(rec);
 					var contactmodel = Ext.ModelMgr.create(rec.data, 'Contacts');
-					editPnl.loadModel(contactmodel);
+					editPnl.setRecord(contactmodel);
+					Ext.Viewport.add(editPnl);
 					editPnl.show();
 				},
 				itemTpl: ['<div >{firstName} {lastName} </div>',
 						'<div>{modifyDateParsed}</div>',
 						'<div class="delete"></div>'],
 				listeners: {
-					itemtap: function(view, index, item, e) {
-						
+					itemtap: function(view, index, item,record, e) {
+						console.log(e);
 						if (e.getTarget(".delete")) {
 							var rec = view.getStore().getAt(index);
 							var user = Ext.ModelMgr.create(rec.data, 'Contacts');
