@@ -27,18 +27,20 @@ Ext.setup({
 
 		Ext.define("Contacts", {
 			extend: "Ext.data.Model",
+			
 			config : {
+				idProperty : 'uniqueid', // if we have field with name as id, conflicts happens with default idProperty(id) which always have value as ext-record-x
+				clientIdProperty : 'id',
 				fields: [{
 					name: 'firstName',
 					type: 'string'
 				}, {
 					name: 'lastName',
-					type: 'string',
-					mapping : 'firstName'
-				}, {
-					name: 'ids',
+					type: 'string'
+				},{
+					name: 'id',
 					type: 'int',
-					fieldOption: 'PRIMARY KEY ASC'
+					fieldOption: 'PRIMARY KEY'
 				}, {
 					name: 'modifyDate',
 					type: 'string'
@@ -63,8 +65,7 @@ Ext.setup({
 					//dbQuery 	: 'SELECT * FROM contact_table limit 0,1' //dbQuery only works with read operation
 				},
 				reader: {
-					type: 'array',
-					idProperty: 'ID'
+					type: 'array'
 				}
 			}	
 			},
@@ -131,8 +132,9 @@ Ext.setup({
 							var dt = new Date();
 							var dateval = Ext.Date.format(dt,"Y-m-d H:i:s");
 							formval.modifyDate = dateval;
-							console.log(formval);
-							var rec = Ext.ModelMgr.create(formval, 'Contacts').save();
+							console.log(formval,"val");
+							var rec = Ext.create('Contacts', formval).save();
+							console.log(rec,"blahsadsflskflskd")
 							contactStore.load();
 							mainform.reset();
 							addPnl.hide();
@@ -162,7 +164,7 @@ Ext.setup({
 					name: 'firstName'
 				}, {
 					xtype: 'hiddenfield',
-					name: 'ids'
+					name: 'id'
 				}, {
 					xtype: 'textfield',
 					label: 'Last Name',
@@ -199,12 +201,10 @@ Ext.setup({
 							var dt = new Date();
 							var dateval = Ext.Date.format(dt,"Y-m-d H:i:s");
 							formval.modifyDate = dateval;
-							var rec = Ext.ModelMgr.create(formval, 'Contacts', formval.ids);
-							console.log(formval);
-							//return false;
+							console.log(formval,"formval")
+							var rec = Ext.create('Contacts', formval,formval.id);
 							rec.save();
-							//contactStore.load();
-							//mainform.reset();
+							contactStore.load();
 							editPnl.hide();
 						} else {
 							alert("Enter Values");
@@ -286,9 +286,16 @@ Ext.setup({
 						console.log(e);
 						if (e.getTarget(".delete")) {
 							var rec = view.getStore().getAt(index);
-							var user = Ext.ModelMgr.create(rec.data, 'Contacts');
-							user.destroy();
-							view.getStore().remove(rec);
+							console.log(rec,"recird");;
+							var user = Ext.create('Contacts',{
+								firstName: "sdfsdf",
+								id: 4,
+								lastName: "das",
+								modifyDate: "2012-03-03 01:11:19"
+							});
+							console.log(user,"sadfsdfsdsdf");
+							rec.destroy();
+							//view.getStore().remove(rec);
 						}
 					}
 				}
