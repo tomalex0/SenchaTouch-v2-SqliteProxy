@@ -75,12 +75,11 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
     read: function(operation, callback, scope) {
         var me = this,
         param_arr = [];
-	
-	Ext.iterate(operation.params,function(a,i){
+	Ext.iterate(operation.getParams(),function(a,i){
 	    param_arr.push(i);
 	});
 	
-        var sql = operation.query || me.config.dbConfig.dbQuery || 'SELECT * FROM '+me.config.dbConfig.tablename+'';
+	var sql = operation.config.query || me.config.dbConfig.dbQuery || 'SELECT * FROM '+me.config.dbConfig.tablename+'';
         
         var params, onSucess, onError;
         
@@ -93,8 +92,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             me.throwDbError(tx, err);
         };
 
-        
-        me.queryDB(me.config.dbConfig.dbConn, sql, onSucess, onError,param_arr);
+        me.queryDB(me.getDb(), sql, onSucess, onError,param_arr);
     },
     //inherit docs
     destroy: function(operation, callback, scope) {
@@ -117,12 +115,19 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
     },
     /**
      *@private
+     * Get Database instance
+     */
+    getDb : function(){
+	//return Ext.DbConnection.dbConn || this.config.dbConfig.dbConn;
+	return this.config.dbConfig.dbConn.dbConn;
+    },
+    /**
+     *@private
      *Creates table if not exists
      */
     createTable : function(){
         var me = this;
-	console.log(me)
-        me.config.dbConfig.dbConn.transaction(function(tx) {
+	me.getDb().transaction(function(tx) {
             
             var onError = function(tx, err) {
                 me.throwDbError(tx, err);
@@ -132,13 +137,13 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
                console.log("success");
             }
         
-            var createTable = function() {
+            var createTableSchema = function() {
 		console.log(me.constructFields());
                 var createsql = 'CREATE TABLE IF NOT EXISTS ' + me.config.dbConfig.tablename + '('+me.constructFields()+')';
-                tx.executeSql(createsql,[],onSucess,onError);
+		tx.executeSql(createsql,[],onSucess,onError);
             }
             var tablesql = 'SELECT * FROM '+ me.config.dbConfig.tablename+' LIMIT 1';
-            tx.executeSql(tablesql,[], Ext.emptyFn, createTable);
+            tx.executeSql(tablesql,[], Ext.emptyFn, createTableSchema);
         });
         
     },
@@ -155,8 +160,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             flatFields = [];
 	    Ext.each(fields, function(f) {
 		
-		if(f.config.isTableField || !Ext.isDefined(f.config.isTableField)){
-		    console.log(f,"woow");
+		if((f.config.isTableField || !Ext.isDefined(f.config.isTableField)) && (f.getName() != m.getIdProperty())){
 		    var name = f.getName();
 		    var type = f.config.type;
 		    var fieldoption = (f.config.fieldOption)  ? f.config.fieldOption : '';
@@ -178,7 +182,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             m = this.getModel(), modelFields = m.prototype.fields.items;
 	    console.log(modelFields);
             Ext.each(modelFields,function(item,index){
-		if(item.config.isTableField == false){
+		if(item.config.isTableField == false || (item.getName() == m.getIdProperty())){
 		    console.log(item);
                     removedField.push(item.getName());
                 }
@@ -270,6 +274,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
         var storedatas = [];
         if (results.rows && records.length) {
             for (i = 0; i < results.rows.length; i++) {
+		console.log(records[i]);
 		storedatas.push(new Model(records[i]));
             }
 	    operation.setSuccessful();
@@ -331,7 +336,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
 	console.log(values,"values");
         var sql = 'INSERT INTO ' + tablename + '(' + fields.join(',') + ') VALUES (' + placeholders.join(',') + ')';
 	console.log(sql,"sql");
-        me.queryDB(me.config.dbConfig.dbConn, sql, onSuccess, onError, values);
+        me.queryDB(me.getDb(), sql, onSuccess, onError, values);
 
         return true;
     },
@@ -368,7 +373,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
         values.push(id);
         var sql = 'UPDATE ' + tablename + ' SET ' + pairs.join(',') + ' WHERE ' + key + ' = ?';
 	console.log(sql);
-        me.queryDB(me.config.dbConfig.dbConn, sql, onSuccess, onError, values);
+        me.queryDB(me.getDb(), sql, onSuccess, onError, values);
         return true;
     },
     /**
@@ -387,7 +392,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             };
         var sql = 'DELETE FROM ' + tablename + ' WHERE ' + primarykey + ' = ?';
         values.push(id);
-        me.queryDB(me.config.dbConfig.dbConn, sql, onSuccess, onError, values);
+        me.queryDB(me.getDb(), sql, onSuccess, onError, values);
         return true;
     },
     
@@ -397,7 +402,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
     truncate: function(tablename) {
         var me = this;
         var sql = 'DELETE FROM ' + me.config.dbConfig.tablename;  
-        me.queryDB(me.config.dbConfig.dbConn, sql, function(){}, function(){});
+        me.queryDB(me.getDb(), sql, function(){}, function(){});
         return true;
     }
 });

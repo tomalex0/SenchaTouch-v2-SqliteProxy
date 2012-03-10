@@ -20,10 +20,10 @@ Ext.setup({
 			dbDescription: "testdb"
 		};
 
-		Ext.DbConnection = new Ext.Sqlite.Connection(dbconnval);
+		//Ext.DbConnection = new Ext.Sqlite.Connection(dbconnval);
+		Ext.DbConnection = Ext.create('Ext.Sqlite.Connection',dbconnval);
 		
 		
-
 
 		Ext.define("Contacts", {
 			extend: "Ext.data.Model",
@@ -43,7 +43,8 @@ Ext.setup({
 					fieldOption: 'PRIMARY KEY'
 				}, {
 					name: 'modifyDate',
-					type: 'string'
+					type: 'string',
+					isTableField:true
 	
 				}, {
 					name: 'modifyDateParsed',
@@ -61,7 +62,7 @@ Ext.setup({
 				type: 'sqlitestorage',
 				dbConfig: {
 					tablename: 'contacts_tables',
-					dbConn: Ext.DbConnection.dbConn
+					dbConn: Ext.DbConnection
 					//dbQuery 	: 'SELECT * FROM contact_table limit 0,1' //dbQuery only works with read operation
 				},
 				reader: {
@@ -109,7 +110,7 @@ Ext.setup({
 			},{
 				docked: 'top',
 				xtype: 'toolbar',
-				title: 'Edit User'
+				title: 'Add User'
 			},{
 				docked: 'bottom',
 				xtype: 'toolbar',
@@ -256,6 +257,7 @@ Ext.setup({
 							console.log(value);
 							
 							contactStore.load({params :{ name: value},query : 'select * from contacts_tables WHERE firstName = ?'});
+							console.log(contactStore,"contactStore");
 						}
 					}
 				},{
