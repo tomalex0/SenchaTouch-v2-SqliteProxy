@@ -7,7 +7,7 @@
  * Ext.data.proxy.SqliteStorage sqlitestorage} proxies. It uses the  HTML5 Sqlite Database storage
  * save {@link Ext.data.Model model instances} for offline use.
  */
-Ext.define('Ext.data.proxy.SqliteStorage', {
+Ext.define('TomAlex0.data.proxy.SqliteStorage', {
     extend: 'Ext.data.proxy.Client',
     alias: 'proxy.sqlitestorage',
     alternateClassName: 'Ext.data.SqliteStorageProxy',
