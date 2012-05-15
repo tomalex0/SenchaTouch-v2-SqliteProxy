@@ -21,7 +21,7 @@ Ext.setup({
 		};
 
 		//Ext.DbConnection = new Ext.Sqlite.Connection(dbconnval);
-		Ext.DbConnection = Ext.create('Ext.Sqlite.Connection',dbconnval);
+		Ext.DbConnection = Ext.create('TomAlex0.data.proxy.SqliteConnection',dbconnval);
 		
 		
 

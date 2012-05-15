@@ -1,7 +1,7 @@
 
 // var a = {dbName : "test",dbVersion : "1.0",dbDescription: "testdb",dbSize : 65536};
 
-Ext.define('Ext.Sqlite.Connection', {
+Ext.define('TomAlex0.data.proxy.SqliteConnection', {
     extend: 'Ext.util.Observable',
     /**
      * @cfg {String} dbName
