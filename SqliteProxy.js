@@ -19,28 +19,28 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
         //ensures that the reader has been instantiated properly
        this.setReader(this.reader);
 	var me = this;
-	console.log(me);
+	//console.log(me);
 	me.createTable();
 	
     },
     //inherit docs
     create: function(operation, callback, scope) {
-        console.log("create");
+        //console.log("create");
 	var me = this;
-	console.log(operation);
+	//console.log(operation);
         var records = me.getTableFields(operation.getRecords()),
             length = records.length,
             id, record, i,
 	    model = this.getModel(),
 	    idProperty = model.getIdProperty();
-	    console.log(idProperty,"model")
+	    //console.log(idProperty,"model")
 	operation.setStarted();
 	
         
         for (i = 0; i < length; i++) {
             record = records[i];
-	    console.log(record,"record");
-            this.setRecord(record, me.config.dbConfig.tablename, idProperty);
+	    //console.log(record,"record");
+            this.setRecord(record, me.config.dbConfig.tablename, idProperty)
         }
 
         operation.setCompleted();
@@ -52,12 +52,12 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
     },
     //inherit docs
     update: function(operation, callback, scope) {
-        console.log("update");
+        //console.log("update");
         var me = this;
         var records = this.getTableFields(operation.getRecords()),
             length = records.length,
-            record, id, i, tbl_Id = me.getModel().getClientIdProperty();
-        console.log(me.getModel().getClientIdProperty(),"primaryKey");
+            record, id, i, tbl_Id = me.getModel().getIdProperty();
+        //console.log(me.getModel().getClientIdProperty(),"primaryKey");
         operation.setStarted();
 
         for (i = 0; i < length; i++) {
@@ -74,17 +74,25 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
     //inherit docs
     read: function(operation, callback, scope) {
         var me = this,
-        param_arr = [];
-	Ext.iterate(operation.getParams(),function(a,i){
-	    param_arr.push(i);
+        fields = [],
+        values = [];
+        
+	Ext.iterate(operation.getParams(),function(k,v){
+	    fields.push(k + ' = ?');
+	    values.push(v);
 	});
 	
 	var sql = operation.config.query || me.config.dbConfig.dbQuery || 'SELECT * FROM '+me.config.dbConfig.tablename+'';
         
-        var params, onSucess, onError;
+	if(fields.length)
+	{
+	    sql = sql + ' WHERE ' + fields.join(' AND ');
+	}
+	
+        var onSucess, onError;
         
         onSucess = function(tx, results) {
-	    console.log(results);
+	    //console.log(results);
 	    me.applyDataToModel(tx, results, operation, callback, scope);
         };
 
@@ -92,15 +100,15 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             me.throwDbError(tx, err);
         };
 
-        me.queryDB(me.getDb(), sql, onSucess, onError,param_arr);
+        me.queryDB(me.getDb(), sql, onSucess, onError,values);
     },
     //inherit docs
     destroy: function(operation, callback, scope) {
-        console.log("destroy");
+        //console.log("destroy");
         var me = this;
         var records = operation.records,
             length = records.length,
-            i, tbl_Id = me.getModel().getClientIdProperty();
+            i, tbl_Id = me.getModel().getIdProperty();
         
         for (i = 0; i < length; i++) {
             this.removeRecord(records[i].data[tbl_Id], me.config.dbConfig.tablename, tbl_Id, false);
@@ -134,16 +142,19 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             };
             
             var onSucess = function(tx, results) {
-               console.log("success");
+               //console.log("success");
             }
         
             var createTableSchema = function() {
-		console.log(me.constructFields());
-                var createsql = 'CREATE TABLE IF NOT EXISTS ' + me.config.dbConfig.tablename + '('+me.constructFields()+')';
+		//console.log(me.constructFields());
+            var createsql = 'CREATE TABLE IF NOT EXISTS ' + me.config.dbConfig.tablename + '('+me.constructFields()+')';
+            console.log(createsql);
 		tx.executeSql(createsql,[],onSucess,onError);
             }
             var tablesql = 'SELECT * FROM '+ me.config.dbConfig.tablename+' LIMIT 1';
+            console.log(tablesql);
             tx.executeSql(tablesql,[], Ext.emptyFn, createTableSchema);
+            
         });
         
     },
@@ -160,14 +171,21 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             flatFields = [];
 	    Ext.each(fields, function(f) {
 		
-		if((f.config.isTableField || !Ext.isDefined(f.config.isTableField)) && (f.getName() != m.getIdProperty())){
+		if((f.config.isTableField || !Ext.isDefined(f.config.isTableField))){
 		    var name = f.getName();
 		    var type = f.config.type;
 		    var fieldoption = (f.config.fieldOption)  ? f.config.fieldOption : '';
 		    type = type.replace(/int/i, 'INTEGER')
 			.replace(/string/i,'TEXT')
 			.replace(/date/i, 'DATETIME');
-		    flatFields.push(name + ' ' + type+' '+fieldoption);
+		    if((f.getName() != m.getIdProperty()))
+		    {
+		        flatFields.push(name + ' ' + type+' '+fieldoption);
+		    }
+		    else
+		    {
+                flatFields.push(name + ' ' + type+' PRIMARY KEY ');		        
+		    }
 		}
 	    });
         return flatFields.join(',');
@@ -177,13 +195,13 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
      * which is not table field name, it will break create and update functionalitites.This looks for field property "isTableField"
      */
     getTableFields : function(records){
-       console.log(records);
+       //console.log(records);
         var  newrecords = [],removedField = [], length = records.length,
             m = this.getModel(), modelFields = m.prototype.fields.items;
-	    console.log(modelFields);
+	    //console.log(modelFields);
             Ext.each(modelFields,function(item,index){
 		if(item.config.isTableField == false || (item.getName() == m.getIdProperty())){
-		    console.log(item);
+		    //console.log(item);
                     removedField.push(item.getName());
                 }
             });
@@ -191,16 +209,16 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
       
         for (i = 0; i < length; i++) {
             record = records[i];
-	    console.log(removedField,"remove");
+	    //console.log(removedField,"remove");
             Ext.each(removedField,function(item,index){
-		console.log(record.getData(),"record");
-		console.log(item,"item");
+		//console.log(record.getData(),"record");
+		//console.log(item,"item");
                 delete record.getData()[item];
             });
-	    console.log(record);
+	    //console.log(record);
             newrecords.push(record);
         }
-	console.log(newrecords);
+	//console.log(newrecords);
         return newrecords;
     },
      /**
@@ -218,7 +236,8 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             if (typeof callback == 'function') {
                 callback.call(scope || me, results, me);
             }
-
+            if(!params) params = [];
+            console.log(sql+" " +JSON.stringify(params))
             tx.executeSql(
             sql, (params ? params : []), successcallback, errorcallback);
         });
@@ -241,7 +260,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
         return data;
     },
     applyData: function(data, operation, callback, scope) {
-	console.log(data);
+	//console.log(data);
 	var me = this;
         /*operation.resultSet = new Ext.data.ResultSet({
             records: data,
@@ -255,7 +274,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
 	    total  : data.length,
             loaded : true
         }));
-	console.log(operation);
+	//console.log(operation);
 	
         
         //finish with callback
@@ -267,15 +286,17 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
     applyDataToModel: function(tx, results, operation, callback, scope) {
         var me = this,
 	Model = me.getModel(),
-	fields  = Model.getFields().items;
-	console.log(fields);
+	fields  = Model.getFields().items,
+    primarykey = Model.getIdProperty();
+	//console.log(fields);
         var records = me.parseData(tx, results);
-	console.log(records.length);
+	//console.log(records.length);
         var storedatas = [];
         if (results.rows && records.length) {
             for (i = 0; i < results.rows.length; i++) {
-		console.log(records[i]);
-		storedatas.push(new Model(records[i]));
+		//console.log(records[i]);
+        
+		storedatas.push(new Model(records[i],records[i][primarykey]));
             }
 	    operation.setSuccessful();
         }
@@ -288,16 +309,16 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
      * @param {Object} rs Response
      */
     throwDbError: function(tx, err) {
-        console.log(this.type + "----" + err.message);
+        //console.log(this.type + "----" + err.message);
     },
     /**
      * Saves the given record in the Proxy.
      * @param {Ext.data.Model} record The model instance
      */
     setRecord: function(record, tablename, primarykey) {
-	console.log(primarykey);
-	console.log(record.internalId,"recprd1");
-	console.log(record.getData().id,"recprd2");
+	//console.log(primarykey);
+	//console.log(record.internalId,"recprd1");
+	//console.log(record.getData().id,"recprd2");
 	var me = this,
             rawData = record.getData(),
             fields = [],
@@ -305,23 +326,25 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             placeholders = [],
 
             onSuccess = function(tx, rs) {
-		console.log(rs,"balh");
+		//console.log(rs,"balh");
                 var returnrecord = record,
 		insertId = rs.insertId;
 		returnrecord.data[primarykey] = insertId;
-                returnrecord.internalId = insertId;
+        returnrecord.internalId = insertId;
+        returnrecord.commit(true);
+        
             },
 
             onError = function(tx, err) {
                 me.throwDbError(tx, err);
             };
-	    console.log(rawData,"rawdata");
-	    console.log(rawData.id,"id val");
+	    //console.log(rawData,"rawdata");
+	    //console.log(rawData.id,"id val");
         //extract data to be inserted
         for (var i in rawData) {
-	    console.log(rawData[i],i);
+	    //console.log(rawData[i],i);
             if (rawData[i]) { 
-		console.log(rawData[i],i);
+		//console.log(rawData[i],i);
 		//if(i != primarykey){
                 fields.push(i);
                 values.push(rawData[i]);
@@ -330,12 +353,12 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
             }
         }
 	Ext.iterate(rawData,function(a,b){
-	    console.log(a,b)    
+	    //console.log(a,b)    
 	}); 
-	console.log(fields,"fields");
-	console.log(values,"values");
+	//console.log(fields,"fields");
+	//console.log(values,"values");
         var sql = 'INSERT INTO ' + tablename + '(' + fields.join(',') + ') VALUES (' + placeholders.join(',') + ')';
-	console.log(sql,"sql");
+	//console.log(sql,"sql");
         me.queryDB(me.getDb(), sql, onSuccess, onError, values);
 
         return true;
@@ -358,11 +381,26 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
                 if (rs.rowsAffected == 0) {
                     me.setRecord(record, tablename, primarykey);
                 }
+                else
+                {
+                    record.commit(true);
+                }
             },
             onError = function(tx, err) {
                 me.throwDbError(tx, err);
             };
 
+            // sick hack got work around something clobbering the primary key
+            if(!id)
+            {
+                id = record.getId();
+                if(!id) 
+                {
+                    record.setId(record.internalId);
+                    id = record.internalId; 
+                }
+            }
+            
         for (var i in newData) {
             if (i != primarykey) {
                 pairs.push(i + ' = ?');
@@ -372,7 +410,7 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
 
         values.push(id);
         var sql = 'UPDATE ' + tablename + ' SET ' + pairs.join(',') + ' WHERE ' + key + ' = ?';
-	console.log(sql);
+	//console.log(sql);
         me.queryDB(me.getDb(), sql, onSuccess, onError, values);
         return true;
     },
