@@ -292,13 +292,16 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
         var records = me.parseData(tx, results);
 	//console.log(records.length);
         var storedatas = [];
-        if (results.rows && records.length) {
-            for (i = 0; i < results.rows.length; i++) {
-		//console.log(records[i]);
-        
-		storedatas.push(new Model(records[i],records[i][primarykey]));
+        if (results.rows && records.length) 
+        {
+            for (i = 0; i < results.rows.length; i++) 
+            {
+                //console.log(records[i]);
+                var model = new Model(records[i],records[i][primarykey]);
+                me.processAssociations(Model,model);
+                storedatas.push(model);
             }
-	    operation.setSuccessful();
+            operation.setSuccessful();
         }
 	me.applyData(storedatas, operation, callback, scope);
     },
@@ -442,6 +445,17 @@ Ext.define('Ext.data.proxy.SqliteStorage', {
         var sql = 'DELETE FROM ' + me.config.dbConfig.tablename;  
         me.queryDB(me.getDb(), sql, function(){}, function(){});
         return true;
+    },
+    
+    processAssociations: function(model,record)
+    {
+        var associations = model.getAssociations();
+        for(var i = 0; i < associations.length; ++i)
+        {
+            var assoc = associations.getAt(i);
+            record[assoc.getGetterName()]({reload: true});
+        }
     }
+    
 });
 
